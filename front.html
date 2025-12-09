@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全栈个人仪表盘 (Ultimate版)</title>
+    <style>
+        /* CSS 样式保持一致，增加了卡片删除按钮的样式 */
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary-blue: #1890ff;
+            --primary-purple: #722ed1;
+            --primary-teal: #13c2c2;
+            --text-main: #262626;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0; padding: 20px;
+            color: var(--text-main); height: 100vh;
+            box-sizing: border-box;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        header {
+            background: var(--card-bg); padding: 15px 25px;
+            border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .progress-box { display: flex; align-items: center; gap: 10px; width: 300px; }
+        progress { flex-grow: 1; height: 10px; border-radius: 5px; }
+
+        main {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+            flex-grow: 1; overflow: hidden;
+        }
+
+        .panel {
+            background: var(--card-bg); border-radius: 8px; padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px;
+        }
+        .panel-header h2 { margin: 0; font-size: 1.2rem; }
+
+        .scroll-list { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        input { padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px; }
+
+        /* 左侧列表样式 */
+        .todo-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px; margin-bottom: 8px; background: #fafafa;
+            border-left: 3px solid #d9d9d9; border-radius: 0 4px 4px 0;
+        }
+        .todo-feishu { border-left-color: var(--primary-teal); background: #e6fffb; }
+
+        /* 右侧卡片样式 (升级版：支持相对定位以放置删除按钮) */
+        .info-card {
+            position: relative; /* 关键：为了让删除按钮绝对定位 */
+            padding: 15px; padding-right: 30px; /* 右边留空给删除按钮 */
+            margin-bottom: 10px; border-radius: 4px;
+            background: #fffbe6; border-left: 4px solid #faad14;
+            font-size: 0.95rem; line-height: 1.5;
+            transition: transform 0.2s;
+        }
+        .info-card:hover { transform: translateX(2px); }
+        .info-card a { color: var(--primary-blue); text-decoration: none; font-weight: bold; }
+        
+        .card-ai { background: #f9f0ff; border-left-color: var(--primary-purple); }
+
+        /* 卡片右上角的删除小叉号 */
+        .card-delete-btn {
+            position: absolute; top: 5px; right: 5px;
+            background: transparent; color: #ccc;
+            border: none; font-size: 1.2rem; line-height: 1;
+            cursor: pointer; padding: 0 5px;
+        }
+        .card-delete-btn:hover { color: #ff4d4f; }
+
+        /* 按钮通用样式 */
+        button.action-btn {
+            border: none; padding: 8px 16px; border-radius: 4px;
+            cursor: pointer; color: white; font-weight: 500;
+        }
+        button.action-btn:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-blue { background: var(--primary-blue); }
+        .btn-teal { background: var(--primary-teal); }
+        .btn-purple { background: var(--primary-purple); }
+        .btn-del-todo { background: #ff4d4f; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;}
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div id="quote">🌟 "我们的绳子上已经打了太多人的结。"</div>
+        <div class="progress-box">
+            <span>本周进度</span>
+            <progress value="45" max="100"></progress>
+        </div>
+    </header>
+
+    <main>
+        <!-- 左侧：待办 -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2>📝 时间轴待办</h2>
+                <button class="action-btn btn-teal" onclick="syncFeishu()">🔄 同步飞书</button>
+            </div>
+            <div class="input-group">
+                <input type="time" id="task-time">
+                <input type="text" id="task-desc" placeholder="输入任务..." style="flex-grow:1;">
+                <button class="action-btn btn-blue" onclick="addTask()">添加</button>
+            </div>
+            <div id="todo-list" class="scroll-list"></div>
+        </section>
+
+        <!-- 右侧：信息流 -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2>💡 热门信息 / 备忘</h2>
+                <button class="action-btn btn-purple" onclick="refreshNews()">⚡ 抓取 AI 热点</button>
+            </div>
+            <div class="input-group">
+                <input type="text" id="info-input" placeholder="输入备忘，刷新不丢失..." style="flex-grow:1;">
+                <!-- 注意：现在这里调用 addManualCard -->
+                <button class="action-btn btn-blue" onclick="addManualCard()">记录</button>
+            </div>
+            <div id="info-cards" class="scroll-list"></div>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/api';
+
+        // 1. 加载数据
+        async function loadData() {
+            try {
+                const response = await fetch(`${API_URL}/data`);
+                const data = await response.json();
+
+                // 渲染待办
+                const todoList = document.getElementById('todo-list');
+                todoList.innerHTML = '';
+                if (data.todos) {
+                    data.todos.sort((a, b) => (a.time > b.time) ? 1 : -1);
+                    data.todos.forEach(task => {
+                        const div = document.createElement('div');
+                        const isFeishu = task.desc.includes('[飞书]');
+                        div.className = isFeishu ? 'todo-item todo-feishu' : 'todo-item';
+                        div.innerHTML = `
+                            <span><strong>${task.time}</strong> &nbsp; ${task.desc}</span>
+                            <button class="btn-del-todo" onclick="deleteTodo(${task.id})">删除</button>
+                        `;
+                        todoList.appendChild(div);
+                    });
+                }
+
+                // 渲染卡片 (重大更新)
+                const cardList = document.getElementById('info-cards');
+                cardList.innerHTML = '';
+                if (data.cards && data.cards.length > 0) {
+                    data.cards.forEach(card => {
+                        const div = document.createElement('div');
+                        // 根据 type 字段判断颜色
+                        if (card.type === 'ai') {
+                            div.className = 'info-card card-ai';
+                        } else {
+                            div.className = 'info-card'; // 默认黄色备忘
+                        }
+                        
+                        // 插入内容 + 删除按钮
+                        // 注意：这里把 card.id 传给了 deleteCard 函数
+                        div.innerHTML = `
+                            ${card.content}
+                            <button class="card-delete-btn" onclick="deleteCard(${card.id})" title="删除">×</button>
+                        `;
+                        cardList.appendChild(div);
+                    });
+                } else {
+                    cardList.innerHTML = '<div style="color:#999; text-align:center; padding:20px;">暂无信息</div>';
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // 2. 添加待办
+        async function addTask() {
+            const timeVal = document.getElementById('task-time').value || '待定';
+            const descVal = document.getElementById('task-desc').value;
+            if (!descVal) return;
+            await fetch(`${API_URL}/todos`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ time: timeVal, desc: descVal })
+            });
+            document.getElementById('task-desc').value = '';
+            loadData();
+        }
+
+        // 3. 删除待办
+        async function deleteTodo(id) {
+            if (!confirm('删除此任务？')) return;
+            await fetch(`${API_URL}/todos/${id}`, { method: 'DELETE' });
+            loadData();
+        }
+
+        // 4. 新功能：添加手动备忘 (持久化保存)
+        async function addManualCard() {
+            const input = document.getElementById('info-input');
+            const val = input.value;
+            if (!val) return;
+
+            // 发送到后端保存
+            await fetch(`${API_URL}/cards`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: `<strong>📝 备忘：</strong> ${val}` })
+            });
+            
+            input.value = '';
+            loadData(); // 重新加载，这样就能看到新保存的卡片了
+        }
+
+        // 5. 新功能：删除卡片 (无论是新闻还是备忘)
+        async function deleteCard(id) {
+            // 不再弹窗确认，直接删，体验更好
+            await fetch(`${API_URL}/cards/${id}`, { method: 'DELETE' });
+            loadData();
+        }
+
+        // 6. 辅助功能
+        async function refreshNews() {
+            const btn = event.target; btn.innerText = '抓取中...'; btn.disabled = true;
+            await fetch(`${API_URL}/agent/news`, { method: 'POST' });
+            btn.innerText = '⚡ 抓取 AI 热点'; btn.disabled = false;
+            loadData();
+        }
+
+        async function syncFeishu() {
+            const btn = event.target; btn.innerText = '同步中...'; btn.disabled = true;
+            await fetch(`${API_URL}/sync/feishu`, { method: 'POST' });
+            btn.innerText = '🔄 同步飞书'; btn.disabled = false;
+            loadData();
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

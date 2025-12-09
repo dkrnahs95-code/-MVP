@@ -1,0 +1,41 @@
+{
+    "todos": [
+        {
+            "id": 1767027958916,
+            "time": "08:30",
+            "desc": "[飞书] "
+        }
+    ],
+    "cards": [
+        {
+            "id": 1765262744629,
+            "content": "<strong>[AI热点]</strong> <a href='https://techcrunch.com/2025/12/08/department-of-commerce-may-approve-nvidia-h200-chip-exports-to-china/' target='_blank'>Department of Commerce approves Nvidia H200 chip exports to China</a>",
+            "type": "ai",
+            "created_at": 1765262744.6295254
+        },
+        {
+            "id": 1765262744630,
+            "content": "<strong>[AI热点]</strong> <a href='https://techcrunch.com/2025/12/08/googles-ai-try-on-app-doppl-adds-a-shoppable-discovery-feed/' target='_blank'>Google’s AI try-on app Doppl adds a shoppable discovery feed</a>",
+            "type": "ai",
+            "created_at": 1765262744.6295302
+        },
+        {
+            "id": 1765262744631,
+            "content": "<strong>[AI热点]</strong> <a href='https://techcrunch.com/2025/12/08/claude-code-is-coming-to-slack-and-thats-a-bigger-deal-than-it-sounds/' target='_blank'>Claude Code is coming to Slack, and that’s a bigger deal than it sounds</a>",
+            "type": "ai",
+            "created_at": 1765262744.6295326
+        },
+        {
+            "id": 1765262744632,
+            "content": "<strong>[AI热点]</strong> <a href='https://techcrunch.com/2025/12/08/google-details-security-measures-for-chromes-agentic-features/' target='_blank'>Google details security measures for Chrome’s agentic features</a>",
+            "type": "ai",
+            "created_at": 1765262744.6295347
+        },
+        {
+            "id": 1765262744633,
+            "content": "<strong>[AI热点]</strong> <a href='https://techcrunch.com/2025/12/08/you-can-buy-your-instacart-groceries-without-leaving-chatgpt/' target='_blank'>You can buy your Instacart groceries without leaving ChatGPT</a>",
+            "type": "ai",
+            "created_at": 1765262744.6295366
+        }
+    ]
+}
